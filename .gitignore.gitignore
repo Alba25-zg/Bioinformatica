@@ -1,0 +1,7 @@
+.gitignore
+data/
+*.bam
+*.fastq
+*.fastq.gz
+*.sam
+*.zip

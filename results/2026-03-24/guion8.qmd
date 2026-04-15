@@ -1,11 +1,13 @@
 ---
 title: "practica 8 BLAST"
 format: html
+engine: knitr
 editor: visual
 ---
-en mi caso como tengo mac, para instalar he usado, brew install blast. Y para descargar la base de datos de Swissprot: update_blastdb.pl --decompress swissprot
-## yo lo he nombrado como .fasta
-```{bash}
+
+en mi caso como tengo mac, para instalar he usado, brew install blast. Y para descargar la base de datos de Swissprot: update_blastdb.pl --decompress swissprot \## yo lo he nombrado como .fasta
+
+en el bash
 if [ ! -e ../../data/blochmannia.paa ]; then
   
    if [ ! -e blochmannia_seg.asnb ]; then
@@ -26,22 +28,22 @@ if [ ! -e ../../data/blochmannia.paa ]; then
 fi
 
 luego se hace lo mismo con buchnera
-```
-blastp -query ../../data/buchnera.fasta \
-       -db ../../data/blochmannia \
-       -out buc2blo.txt \
-       -outfmt '6 qseqid sseqid qlen slen length evalue bitscore' \
-       -evalue 0.001 \
-       -max_target_seqs 1
-       
-blastp -query ../../data/blochmannia.fasta \
-       -db ../../data/buchnera \
-       -out blo2buc.txt \
-       -outfmt '6 qseqid sseqid qlen slen length evalue bitscore' \
-       -evalue 0.001 \
-       -max_target_seqs 1
 
-```
+blastp -query ../../data/buchnera.fasta\
+-db ../../data/blochmannia\
+-out buc2blo.txt\
+-outfmt '6 qseqid sseqid qlen slen length evalue bitscore'\
+-evalue 0.001\
+-max_target_seqs 1
+
+blastp -query ../../data/blochmannia.fasta\
+-db ../../data/buchnera\
+-out blo2buc.txt\
+-outfmt '6 qseqid sseqid qlen slen length evalue bitscore'\
+-evalue 0.001\
+-max_target_seqs 1
+
+```         
 para compararlos:
 buc2blo <- read.table(
    'buc2blo.txt',
@@ -54,47 +56,33 @@ blo2buc <- read.table(
                  'length', 'evalue', 'bitscore')
 )
 ```
-obtengo 2 tablas,sirve para identificar los ortólogos, tenemos muchas proteinas de uno y de otro, al hacer un BLAST podemos considerae las que son ortólogas. Entre las dos listas cuales son recíprocas, para hacer eso es más complicado. En una de las dos tablas añade otra columna, llamada reverse y con match, busco en la primera tabla que corresponda en la segunda tabla.
+
+obtengo 2 tablas,sirve para identificar los ortólogos, tenemos muchas proteinas de uno y de otro, al hacer un BLAST podemos considerar las que son ortólogas. Entre las dos listas cuales son recíprocas, para hacer eso es más complicado. En una de las dos tablas añade otra columna, llamada reverse y con match, busco en la primera tabla que corresponda en la segunda tabla.
 
 buc2blo$reverse <- blo2buc[
    match(buc2blo$subject, blo2buc$query),
    'subject'
 ]
 coincidencias <- buc2blo[
-   buc2blo$query == buc2blo$reverse,
-   c('query', 'subject')
-]
+   buc2blo$query == buc2blo\$reverse, c('query', 'subject') \]
 
+EJERCICIO 2 blastdbcmd -db ../../data/swissprot -entry P39615 -out P39615.fa
 
+psiblast -db ../../data/swissprot\
+-query P39615.fa\
+-out P39615.blastout.txt\
+-evalue 0.1\
+-outfmt 7\
+-inclusion_ethresh 0.001\
+-num_iterations 7\
+-matrix BLOSUM62
 
-EJERCICIO 2
-blastdbcmd -db ../../data/swissprot -entry P39615 -out P39615.fa
+EJERCICIO 3 library('Biostrings') unmapped \<- readDNAStringSet('../../data/queries.fa') n \<- length(unmapped) muestra \<- unmapped\[sample(1:n, 20)\] writeXStringSet(muestra, 'muestra.fa')
 
-psiblast -db ../../data/swissprot \
-         -query P39615.fa \
-         -out P39615.blastout.txt \
-         -evalue 0.1 \
-         -outfmt 7 \
-         -inclusion_ethresh 0.001 \
-         -num_iterations 7 \
-         -matrix BLOSUM62
-         
-         
-EJERCICIO 3
-library('Biostrings')
-unmapped <- readDNAStringSet('../../data/queries.fa')
-n <- length(unmapped)
-muestra <- unmapped[sample(1:n, 20)]
-writeXStringSet(muestra, 'muestra.fa')
-
-despues tenia que ejecutar el BLASTN remoto pero tardaba mucho y al final lo cancelé.
-if [ ! -e resultado.txt ]; then
-   blastn -query muestra.fa \
-          -db nr \
-          -out resultado.txt \
-          -outfmt '6 qaccver saccver length qlen qstart qend evalue bitscore staxid' \
-          -max_target_seqs 1 \
-          -evalue 0.001 \
-          -remote 2> /dev/null
-fi
-
+despues tenia que ejecutar el BLASTN remoto pero tardaba mucho y al final lo cancelé. if \[ ! -e resultado.txt \]; then blastn -query muestra.fa\
+-db nr\
+-out resultado.txt\
+-outfmt '6 qaccver saccver length qlen qstart qend evalue bitscore staxid'\
+-max_target_seqs 1\
+-evalue 0.001\
+-remote 2\> /dev/null fi

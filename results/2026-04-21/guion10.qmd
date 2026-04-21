@@ -1,0 +1,88 @@
+---
+title: "guion practica 10"
+format: html
+engine: knitr
+editor: visual
+---
+
+## Ejercicio 1
+
+para calcular el numero de secuencias que tiene el archivo utilizo esta orden:
+
+grep -c "\^\>" ../../data/At4.10.fa
+
+13812: numero de secuencias
+
+he tenido que cambair de .fa.gz a .fa porque al descaragrlo de Safari, me lo ha descomprimido directamente.
+
+-   Qué longitudes mínima, media y máxima tienen las secuencias?
+
+-   ¿Cuál es el número total de bases?
+
+-   Si se estimara que el genoma a ensamblar fuera de sólo 19 millones de bases, ¿cuál sería la cobertura esperada?
+
+
+    awk ' /\^\>/ { if (seq_len \> 0) { total_bases += seq_len count++ if (min == 0 \|\| seq_len \< min) min = seq_len if (seq_len \> max) max = seq_len } seq_len = 0 next } { seq_len += length(\$0) } END { if (seq_len \> 0) { total_bases += seq_len count++ if (min == 0 \|\| seq_len \< min) min = seq_len if (seq_len \> max) max = seq_len } print "Total de secuencias: " count print "Longitud mínima: " min print "Longitud máxima: " max print "Longitud media: " total_bases / count print "Número total de bases: " total_bases }' ../../data/At4.10.fa
+
+Total de secuencias: 13812
+
+Longitud mínima: 2942
+
+Longitud máxima: 59075
+
+Longitud media: 18143,6
+
+Número total de bases: 250599484, ahora, para saber la cobertura toal, divido este numero entre las 19 millones de bases, ya que la formula es así dando: 13,19, es decir, cada letra del genoma a ensamblar esta cubierta por unas 13 secuencias del archivo.
+
+utilizo la orden: \~/bin/hifiasm/hifiasm -o asm1/At4 -t 2 -f 0 ../../data/At4.10.fa
+
+y paso al ejercicio 2
+
+## Ejercicio 2 
+
+## Consulta la ayuda de `hifiasm` (`hifiasm -h`) y contesta las preguntas siguientes:
+
+1.  ¿Los parámetros corresponden al ensamblaje de un genoma haploide o diploide?
+
+    es un genoma haploide. En los genomas diploides (como el humano), tenemos diferencias entre la copia heredada del padre y la de la madre. -f 0 es de genomas haploides.
+
+2.  ¿Qué nivel de eliminación de duplicaciones hemos aplicado? (El paso de eliminar duplicaciones sirve para que las zonas de alta heterocigosidad no sean ensambladas como contigs diferentes).
+
+    Se ha aplicado el nivel 0, la opción `-f` controla el umbral para el purgado de contigs. El valor por defecto que usa el programa si no le dices nada (para genomas diploides) suele ser 37. Al forzarlo a `0`, hemos desactivado completamente este paso.
+
+3.  Si tuvieramos lecturas ultra-largas, ¿con qué opción o argumento añadiríamos esa información?
+
+    Con el argumento –ul y luego poner el nombre del archivo donde esten esas lecturas.
+
+    ## Ejercicio 3
+
+## 
+
+1.  Están en el archivo `asm1/At4.bp.p_ctg.gfa` (dentro de las líneas que empiezan por `S`). También las hemos extraído al archivo FASTA `asm1/At4.fa`
+
+2.  En los archivos `.gfa`, ¿qué son las líneas que empiezan por ‘A’?
+
+    Son lineas de Read Attachment, indican posicion y orientacion de lecturas individuales sobre los contigs del ensambaje final.
+
+3.  ¿Qué información tiene los archivos `.bed`? Contienen coordenadas de regiones genómicas específicas. En `hifiasm`, se usan principalmente para marcar regiones de **baja cobertura**
+
+4.  ¿Cuál es la cobertura media estimada de las secuencias homocigotas?
+
+    de unos 13,2X, Es el pico principal donde se encuentran la mayoría de las lecturas.
+
+5.  ¿Y la de las heterocigotas?
+
+    de 6,6X, la miatd de la homocigota, donde los alelos divergen
+
+    he usado:
+    awk '(/\^S/){print "\>" \$2 "\n" \$3}' asm1/At4.bp.p_ctg.gfa \> asm1/At4.fa
+
+    y
+
+    grep -v "\^\>" asm1/At4.fa \| wc -c
+
+     21971115
+
+    para ver la calidad del ensamblaje, me esta dando problemas porque tengo una version muy antiguo de python y en mac me da bastantes problemas para instalar la mas reciente
+
+

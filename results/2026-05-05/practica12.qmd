@@ -1,0 +1,152 @@
+---
+title: "Analisis de expresion diferencial"
+format: html
+editor: visual
+---
+
+## Instalar DESeq2
+
+primero instalo el paquete con BiocManager::install("DESeq2", lib = .libPaths()\[1\])
+
+compruebo que esta con library(DESeq2)
+
+## Ejercicio 1 exploración de datos
+
+# Cargar el diseño experimental (muestras)
+
+muestras \<- read.table('../../data/dme_elev_samples.tsv', header = TRUE)
+
+# Cargar la matriz de conteos (genes)
+
+genex \<- read.table('../../data/salmon.merged.gene_counts.tsv', header = TRUE)
+
+Recuerda dejar constancia en un bloque de código de cómo obtienes las respuestas.
+
+1.  Usa la función `paste()` para añadir una columna a `muestras` que contenga la población y la temperatura unidas por `_`. muestras\$grupo \<- paste(muestras\$population, muestras\$temp, sep = "\_")
+
+2.  ¿Cuál es el número total de lecturas por muestra? le digo que busque que columnas son numericas y que las sume.
+
+    columnas_numericas \<- sapply(genex, is.numeric)
+
+    lecturas_por_muestra \<- colSums(genex\[, columnas_numericas\])
+
+    lecturas_por_muestra
+
+    SRR1576457 SRR1576458 SRR1576459 SRR1576460 28252778 21565448 29471559 27692134 SRR1576461 SRR1576462 SRR1576463 SRR1576464 26953900 29368135 29706071 26757043 SRR1576465 SRR1576514 SRR1576515 SRR1576516 26596118 30950499 25563787 24401671
+
+3.  ¿Los recuentos tienen distribuciones parecidas entre muestras?
+
+    boxplot(log2(genex\[, columnas_numericas\] + 1), las = 2, cex.axis = 0.7, main = "Distribución de recuentos por muestra (log2)", col = "skyblue")
+
+    la distribución es homogénea y son parecidos entre si, lo que indica que no hay genotecas que hayan fallado.
+
+4.  ¿Cuántos genes no se expresan en absoluto en ninguna de las muestras?
+
+conteos \<- genex\[, columnas_numericas\]
+
+suma_por_gen \<- rowSums(conteos), sirve para sumar todas las lecturas que han recibido un gen a lo largo de las 12 muestras.
+
+genes_cero \<- sum(suma_por_gen == 0)
+
+genes_cero: 4722 son los genes que no se han expresado en abosuluto en ninguna de las muestras.
+
+## Crear el objeto de clase DESeqDataSet
+
+suppressMessages(library('DESeq2')) all(names(genex)\[3:14\] == muestras\$sample)
+
+# Pasamos la columna "sample" a nombres de fila:
+
+row.names(muestras) \<- muestras$sample
+# Eliminamos la columna "sample":
+muestras$sample \<- NULL \# Y convertimos "population" y "temp" en factores: muestras$population <- factor(muestras$population, levels = c('maine', 'panama')) muestras$temp       <- factor(muestras$temp, levels = c('low', 'high')) muestras
+
+```         
+     population temp       grupo
+```
+
+SRR1576457 maine low maine_low SRR1576458 maine low maine_low SRR1576459 maine low maine_low SRR1576460 maine high maine_high SRR1576461 maine high maine_high SRR1576462 maine high maine_high SRR1576463 panama low panama_low SRR1576464 panama low panama_low SRR1576465 panama low panama_low SRR1576514 panama high panama_high SRR1576515 panama high panama_high SRR1576516 panama high panama_high
+
+es importante que los datos de recuento sean numeros enteros y en forma de matriz
+
+row.names(genex) \<- genex$gene_name
+genex$gene_name \<- NULL genex\$gene_id \<- NULL genex \<- round(as.matrix(genex))
+
+dds1 \<- DESeqDataSetFromMatrix( countData = genex, colData = muestras, design = \~ population + temp ) dds1
+
+class: DESeqDataSet dim: 24254 12 metadata(1): version assays(1): counts rownames(24254): 7SLRNA:CR32864 a ... RR51477 Bari1{}RR51478 rowData names(0): colnames(12): SRR1576457 SRR1576458 ... SRR1576515 SRR1576516 colData names(3): population temp grupo
+
+## Pre-filtrado
+
+ayuda a reducir la memoria ocupada por `dds1`: keep \<- rowSums(counts(dds1)) \> 0 dds1 \<- dds1\[keep, \]
+
+## Expresión diferencial
+
+dds1 \<- DESeq(dds1)
+
+res \<- results(dds1) res
+
+los valores estan ordenados por defecto alfabéticamente
+
+Ejercicio 3
+
+1.  Mira la ayuda de `results()` y genera también la tabla de resultados para el contraste entre las dos regiones de procedencia de las moscas.
+
+    se puede usar el argumento contrast que se encuentra dentro de la funcion results ()
+
+    levels(dds1\$population) \[1\] "maine" "panama"
+
+    obtengo los resultados con: res_poblacion \<- results(dds1, name = "population_panama_vs_maine")
+
+    head(res_poblacion)
+
+    message("--- Resultados por Temperatura (High vs Low) ---") summary(res)
+
+    out of 19508 with nonzero total read count adjusted p-value \< 0.1 LFC \> 0 (up) : 2418, 12% LFC \< 0 (down) : 2336, 12% outliers \[1\] : 90, 0.46% low counts \[2\] : 3018, 15% (mean count \< 2) \[1\] see 'cooksCutoff' argument of ?results \[2\] see 'independentFiltering' argument of ?results
+
+    message("--- Resultados por Región (Panama vs Maine) ---") summary(res_poblacion)
+
+    ut of 19508 with nonzero total read count adjusted p-value \< 0.1 LFC \> 0 (up) : 623, 3.2% LFC \< 0 (down) : 634, 3.2% outliers \[1\] : 90, 0.46% low counts \[2\] : 3018, 15% (mean count \< 2) \[1\] see 'cooksCutoff' argument of ?results \[2\] see 'independentFiltering' argument of ?results
+
+2.  Usa `summary()` sobre los resultados para ver el número de genes diferencialmente expresados entre cada par de condiciones.
+
+    \# 1. Resumen para el contraste de Temperatura (High vs Low) message("=== RESUMEN: TEMPERATURA (High vs Low) ===") summary(res) 
+
+    \# 2. Resumen para el contraste de Región (Panama vs Maine) message("=== RESUMEN: REGIÓN (Panama vs Maine) ===") summary(res_poblacion)
+
+    por temperatura: 2418 se activan o aumentan con el calor y 2336 genes se apagan con el calor
+
+    por region (panama vs maine): 623 genes se expresan mas en las moscas de Panama que en las de Maine. 634 genes se expresan menos en las moscas de Panama que en comparacion con Maine.
+
+3.  ¿Cuál es la tasa de falsos positivos (FDR)?
+
+    la tasa se va en el adjusted p-value \< 0.1 que me devuelve el codigo anterior, la tasa es del 10% (0.1), lo que indica que cabe la posibilidad de que un 10% de los genes dados por válidos sean falsos positivos.
+
+## Graficas
+
+# 
+
+# 
+
+# Eje X: log2FoldChange \| Eje Y: -log10 del p-valor ajustado
+
+plot(res_poblacion$log2FoldChange, -log10(res_poblacion$padj), col = "gray", pch = 20, main = "Volcano Plot: Panamá vs Maine", xlab = "Log2 Fold Change", ylab = "-Log10 P-valor Ajustado")
+
+# 2. Seleccionamos los genes significativos (FDR \< 0.1) y los pintamos de rojo
+
+genes_significativos \<- res_poblacion\$padj \< 0.1
+
+points(res_poblacion$log2FoldChange[genes_significativos],
+       -log10(res_poblacion$padj)\[genes_significativos\], col = "red", pch = 20)
+
+# 3. Añadimos unas líneas guía (opcional, pero queda muy pro)
+
+abline(h = -log10(0.1), col = "blue", linetype = 2, lwd = 1.5) \# Línea de corte de significancia
+
+## Extraer datos transformados 
+
+res \<- res\[! is.na(res$pvalue), ]
+> res <- res[order(res$log2FoldChange),\] \> heatmap(NormCounts\[c(head(row.names(res), 100), + tail(row.names(res), 100)), \], + Rowv = NA, Colv = NA)
+
+¿Podrías explicar qué hace el bloque de código anterior?
+
+este codigo permite hacer una estabilización de la varianza para comparar los genes gráficamente. Tambien limpia los resultados eliminando p-valores nulos y los ordena segun su nivel de cambio. Por ultimo, selecciona los mejores 100 genes subexpresados y los mejores 100 sobreexpresados para representarlos en un mapa de calor, para observar el contraste de expresión génica entre las condiciones analizadas sin aplicar el agrupamiento jerárquico.

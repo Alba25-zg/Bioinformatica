@@ -1,0 +1,59 @@
+---
+title: "Anotación"
+format: html
+editor: visual
+---
+
+continuo trabajando en la carpeta del dia 21, pues ahi estan tambien los resultados del ensamblaje y se indica en el guion de practicas del aula virtual que continuemos en la carpeta del dia 21.
+
+como uso MAC, algunas cosas cambian con respecto a Linux, de RepeatModeler, descargo los archivos de resultados del aula virtual y respondo a las preguntas:
+
+### Ejercicio 1 y 2
+
+1.  ¿Cuántas familias de elementos transponibles se han encontrado?
+
+    24. grep -c "\^\>" At4-families.fa
+
+2.  ¿Cuánto duró la ejecución del programa?
+
+    head At4-rmod.log tail At4-rmod.log
+
+    Classification Time: 00:00:32 (hh:mm:ss) Elapsed Time
+
+    Program Time: 01:02:16 (hh:mm:ss) Elapsed Time
+
+3.  ¿Cuál dirías que es el archivo de salida más importante?
+
+    el At4-families.fa ya que es el que contiene las secuencias de las familias
+
+## Ejercicio 3
+
+bedtools maskfasta -fi asm1/At4.fa -bed RM01/At4.fa.out.gff -fo At4.soft.fa -soft
+
+## Ejercicio 4
+
+esto conviene que este al principio dle script, por si fuera necesario compartirlo.
+
+#\| eval: false
+
+export TSEBRA_PATH=/Users/albazaragozaguillen/documentos/bin/TSEBRA/bin
+
+export MINIPROTHINT_PATH=/Users/albazaragozaguillen/documentos/bin/miniprothint
+
+galba.pl --species="Arabidopsis thaliana"\
+--genome=At4.soft.fa\
+--prot_seq=proteinas.fasta
+
+## Ejercicio 5
+
+galba.gtf sería el archivo de resultados, el formato con el que se describen las anotaciones de un genoma. no hay regiones no traducidas en la anotación porque le hemos ofrecido proteinas, no datos de RNAseq
+
+head -n 20 galba.gtf
+
+al hacer esto, aparecen una serie de columnas, con el programa AUGUSTUS, donde nos da información sobre un gen, un exón o intrón o region codificante (CDS)
+
+¿como evaluarias esta anotación?
+
+se puede hacer contanto cuantos genes ha contado GALBA, 4362 genes, es de esperar porque el ensamblaje estaba fragmentado, le faltan muchos genes.
+
+para subir a git, subire este guion, el HTML y algunos resultados, no todos porque son muchas subcarpetas y con archivos muy grandes en ocasiones
